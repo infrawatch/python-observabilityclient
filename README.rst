@@ -22,6 +22,7 @@ Run the following as the stack user on your undercloud
   sudo ln -s /home/stack/obsclient/osp-observability-ansible/playbooks /usr/share/osp-observability/playbooks
   sudo chmod a+rx /usr/share/osp-observability/playbooks
   sudo ln -s /home/stack/obsclient/osp-observability-ansible/roles/spawn_container /usr/share/ansible/roles/spawn_container
+  sudo ln -s /home/stack/obsclient/osp-observability-ansible/roles/osp_observability /usr/share/ansible/roles/osp_observability
   sudo mkdir /var/lib/osp-observability
   sudo chmod a+rwx /var/lib/osp-observability
   cd
