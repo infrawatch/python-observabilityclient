@@ -13,13 +13,7 @@
 #   under the License.
 
 def get_client(obj):
-    if hasattr(obj.app, 'client_manager'):
-        # NOTE(sileht): cliff objects loaded by OSC
-        return obj.app.client_manager.observabilityclient
-    else:
-        # TODO(sileht): Remove this when OSC is able
-        # to install the gnocchi client binary itself
-        return obj.app.client
+    return obj.app.client_manager.observabilityclient
 
 def list2cols(cols, objs):
     return cols, [tuple([o[k] for k in cols])
