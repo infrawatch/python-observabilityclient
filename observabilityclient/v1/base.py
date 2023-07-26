@@ -13,19 +13,8 @@
 #   under the License.
 #
 
-import os
-import shutil
-
 from osc_lib.command import command
 from osc_lib.i18n import _
-
-from observabilityclient.utils import shell
-
-
-OBSLIBDIR = shell.file_check('/usr/share/osp-observability', 'directory')
-OBSWRKDIR = shell.file_check(
-    os.path.expanduser('~/.osp-observability'), 'directory'
-)
 
 
 class ObservabilityBaseCommand(command.Command):
@@ -44,3 +33,43 @@ class ObservabilityBaseCommand(command.Command):
             help=_("Disable cleanup of temporary files.")
         )
         return parser
+
+
+class Manager(object):
+    DEFAULT_HEADERS = {
+        "Accept": "application/json",
+    }
+
+    def __init__(self, client):
+        self.client = client
+        # TODO delete the prom
+        self.prom = client.prometheus_client
+        self.new_prom = client.new_prometheus_client
+
+    def _set_default_headers(self, kwargs):
+        headers = kwargs.get('headers', {})
+        for k, v in self.DEFAULT_HEADERS.items():
+            if k not in headers:
+                headers[k] = v
+        kwargs['headers'] = headers
+        return kwargs
+
+    def _get(self, *args, **kwargs):
+        self._set_default_headers(kwargs)
+        return self.client.api.get(*args, **kwargs)
+
+    def _post(self, *args, **kwargs):
+        self._set_default_headers(kwargs)
+        return self.client.api.post(*args, **kwargs)
+
+    def _put(self, *args, **kwargs):
+        self._set_default_headers(kwargs)
+        return self.client.api.put(*args, **kwargs)
+
+    def _patch(self, *args, **kwargs):
+        self._set_default_headers(kwargs)
+        return self.client.api.patch(*args, **kwargs)
+
+    def _delete(self, *args, **kwargs):
+        self._set_default_headers(kwargs)
+        return self.client.api.delete(*args, **kwargs)

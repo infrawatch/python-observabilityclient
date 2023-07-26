@@ -8,7 +8,7 @@ DEFAULT_API_VERSION = '1'
 API_NAME = 'observabilityclient'
 API_VERSION_OPTION = 'os_observabilityclient_api_version'
 API_VERSIONS = {
-    '1': 'observabilityclient.plugin',
+    '1': 'observabilityclient.v1.client.Client',
 }
 
 
@@ -20,12 +20,16 @@ def make_client(instance):
 
     :param ClientManager instance: The ClientManager that owns the new client
     """
-    plugin_client = utils.get_client_class(
+    observability_client = utils.get_client_class(
         API_NAME,
         instance._api_version[API_NAME],
         API_VERSIONS)
 
-    client = plugin_client()
+    client = observability_client(session=instance.session,
+            adapter_options={
+                'interface': instance.interface,
+                'region_name': instance.region_name
+                })
     return client
 
 

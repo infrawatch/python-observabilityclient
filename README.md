@@ -17,3 +17,19 @@ git clone https://github.com/infrawatch/python-observabilityclient
 cd python-observabilityclient
 sudo python setup.py install --prefix=/usr
 ```
+
+## Usage
+
+Use `openstack observabilityclient query somequery` to query for metrics in prometheus.
+
+To use the python api do the following:
+```
+from observabilityclient import client
+
+c = client.Client(
+            '1', keystone_client.get_session(conf),
+            adapter_options={
+                'interface': conf.service_credentials.interface,
+                'region_name': conf.service_credentials.region_name})
+c.query.query("somequery")
+```
