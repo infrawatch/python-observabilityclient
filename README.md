@@ -20,7 +20,7 @@ sudo python setup.py install --prefix=/usr
 
 ## Usage
 
-Use `openstack observabilityclient query somequery` to query for metrics in prometheus.
+Use `openstack metric query somequery` to query for metrics in prometheus.
 
 To use the python api do the following:
 ```
@@ -33,3 +33,20 @@ c = client.Client(
                 'region_name': conf.service_credentials.region_name})
 c.query.query("somequery")
 ```
+
+## List of commands
+
+openstack metric list - lists all metrics
+openstack metric show - shows current values of a metric
+openstack metric query - queries prometheus and outputs the result
+openstack metric delete - deletes some metrics
+openstack metric snapshot - takes a snapshot of the current data
+openstack metric clean-tombstones - cleans the tsdb tombstones
+
+## List of functions provided by the python library
+c.query.list - lists all metrics
+c.query.show - shows current values of a metric
+c.query.query - queries prometheus and outputs the result
+c.query.delete - deletes some metrics
+c.query.snapshot - takes a snapshot of the current data
+c.query.clean-tombstones - cleans the tsdb tombstones
