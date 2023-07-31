@@ -14,6 +14,7 @@
 
 from observabilityclient.v1 import base
 from observabilityclient.utils import metric_utils
+from osc_lib.i18n import _
 
 from cliff import lister
 
@@ -21,13 +22,9 @@ from cliff import lister
 class List(base.ObservabilityBaseCommand, lister.Lister):
     """Query prometheus for list of all metrics"""
 
-    def get_parser(self, prog_name):
-        parser = super().get_parser(prog_name)
-        return parser
-
     def take_action(self, parsed_args):
         client = metric_utils.get_client(self)
-        metrics = client.query.list()
+        metrics = client.query.list(disable_rbac=parsed_args.disable_rbac)
         return ["metric_name"], [[m] for m in metrics]
 
 
@@ -38,27 +35,89 @@ class Show(base.ObservabilityBaseCommand, lister.Lister):
         parser = super().get_parser(prog_name)
         parser.add_argument(
                 'name',
-                )
+                help=_("Name of the metric to show"))
         return parser
 
     def take_action(self, parsed_args):
         client = metric_utils.get_client(self)
-        metric = client.query.show(parsed_args.name)
-        return metric_utils.metrics2cols_old(metric)
+        metric = client.query.show(parsed_args.name,
+                                   disable_rbac=parsed_args.disable_rbac)
+        return metric_utils.metrics2cols(metric)
 
 
 class Query(base.ObservabilityBaseCommand, lister.Lister):
-    """Query prometheus for the current value of metrics"""
+    """Query prometheus with a custom query string"""
 
     def get_parser(self, prog_name):
         parser = super().get_parser(prog_name)
         parser.add_argument(
-                'query'
-                )
+                '--label',
+                action="append",
+                help=_("Label to add to each metric inside the query. "
+                       "Use --label multiple times to add multiple labels."))
+        parser.add_argument(
+                'query',
+                help=_("Custom PromQL query"))
         return parser
 
     def take_action(self, parsed_args):
         client = metric_utils.get_client(self)
-        metric = client.query.query(parsed_args.query)
+        labels = {}
+        if parsed_args.label is not None:
+            for label_string in parsed_args.label:
+                label, value = label_string.split("=")
+                if label is None or value is None:
+                    error_msg = (f"Invalid label: {label_string}. Labels "
+                                 "should be specified as \"name='value'\"")
+                    raise ValueError(error_msg)
+                labels[label] = value
+        metric = client.query.query(parsed_args.query, labels,
+                                    disable_rbac=parsed_args.disable_rbac)
         ret = metric_utils.metrics2cols(metric)
         return ret
+
+
+class Delete(base.ObservabilityBaseCommand):
+    """Delete data for a selected series and time range"""
+    def get_parser(self, prog_name):
+        parser = super().get_parser(prog_name)
+        parser.add_argument(
+                'matches',
+                action="append",
+                nargs='+',
+                help=_("Series selector, that selects the series to delete. "
+                       "Specify multiple selectors delimited by space to "
+                       "delete multiple series."))
+        parser.add_argument(
+                '--start',
+                help=_("Start timestamp in rfc3339 or unix timestamp. "
+                       "Defaults to minimum possible timestamp."))
+        parser.add_argument(
+                '--end',
+                help=_("End timestamp in rfc3339 or unix timestamp. "
+                       "Defaults to maximum possible timestamp."))
+        return parser
+
+    def take_action(self, parsed_args):
+        client = metric_utils.get_client(self)
+        return client.query.delete(parsed_args.matches,
+                                   parsed_args.start,
+                                   parsed_args.end)
+
+
+class CleanTombstones(base.ObservabilityBaseCommand):
+    """Remove deleted data from disk and clean up the existing tombstones"""
+    def get_parser(self, prog_name):
+        parser = super().get_parser(prog_name)
+        return parser
+
+    def take_action(self, parsed_args):
+        client = metric_utils.get_client(self)
+        return client.query.clean_tombstones()
+
+
+class Snapshot(base.ObservabilityBaseCommand, lister.Lister):
+    def take_action(self, parsed_args):
+        client = metric_utils.get_client(self)
+        ret = client.query.snapshot()
+        return ["Snapshot file name"], [[ret]]

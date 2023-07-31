@@ -18,7 +18,7 @@ from osc_lib.i18n import _
 
 
 class ObservabilityBaseCommand(command.Command):
-    """Base class for observability commands."""
+    """Base class for metric commands."""
 
     def get_parser(self, prog_name):
         parser = super().get_parser(prog_name)
@@ -32,19 +32,25 @@ class ObservabilityBaseCommand(command.Command):
             action='store_true',
             help=_("Disable cleanup of temporary files.")
         )
+
+        # TODO Should this be restricted somehow?
+        parser.add_argument(
+            '--disable-rbac',
+            action='store_true',
+            help=_("Disable rbac injection")
+        )
         return parser
 
 
 class Manager(object):
+    """Base class for the python api."""
     DEFAULT_HEADERS = {
         "Accept": "application/json",
     }
 
     def __init__(self, client):
         self.client = client
-        # TODO delete the prom
         self.prom = client.prometheus_client
-        self.new_prom = client.new_prometheus_client
 
     def _set_default_headers(self, kwargs):
         headers = kwargs.get('headers', {})

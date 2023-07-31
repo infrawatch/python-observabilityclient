@@ -14,17 +14,15 @@
 
 import keystoneauth1.session
 
-from observabilityclient.prometheus_client import PrometheusAPIClient
-from observabilityclient.v1 import python_api
-import prometheus_api_client
+from observabilityclient.v1 import python_api, rbac
+from observabilityclient.utils.metric_utils import get_prometheus_client
 
 
 class Client(object):
-    """Client for the observabilityclient api
-    """
+    """Client for the observabilityclient api"""
 
     def __init__(self, session=None, adapter_options=None,
-                 session_options=None):
+                 session_options=None, disable_rbac=False):
         """Initialize a new client for the Observabilityclient v1 API."""
         session_options = session_options or {}
         adapter_options = adapter_options or {}
@@ -39,23 +37,6 @@ class Client(object):
 
         self.session = session
 
-        # TODO: delete the prometheus_api_client
-        # TODO: figure out where to get the prometheus url.
-        #       Maybe as a param to this method?
-        self.prometheus_client = prometheus_api_client.PrometheusConnect(
-                url="http://127.0.0.1:9090", disable_ssl=True)
-        self.new_prometheus_client = PrometheusAPIClient("127.0.0.1:9090")
-
+        self.prometheus_client = get_prometheus_client()
         self.query = python_api.QueryManager(self)
-        try:
-            self.project_id = self.session.get_project_id()
-            self.default_labels = {
-                    "project": self.project_id
-                    }
-        except:
-            # TODO: Warning
-            self.project_id = None
-            self.default_labels = {
-                    "project": "no-project"
-                    }
-            print("No project")
+        self.rbac = rbac.Rbac(self, self.session, disable_rbac)
