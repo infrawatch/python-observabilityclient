@@ -39,6 +39,41 @@ class Rbac():
                     }
             self.rbac_init_successful = False
 
+    def _find_label_value_end(self, query, start, quote_char):
+        end = start
+        while (end == start or
+               query[end - 1] == '\\'):
+            # Looking for first unescaped quotes
+            end = query.find(quote_char, end + 1)
+        # returns the quote position or -1
+        return end
+
+    def _find_label_pair_end(self, query, start):
+        eq_sign_pos = query.find('=', start)
+        quote_char = "'"
+        quote_start_pos = query.find(quote_char, eq_sign_pos)
+        if quote_start_pos == -1:
+            quote_char = '"'
+            quote_start_pos = query.find(quote_char, eq_sign_pos)
+        end = self._find_label_value_end(query, quote_start_pos, quote_char)
+        # returns the pair end or -1
+        return end
+
+    def _find_label_section_end(self, query, start):
+        nearest_curly_brace_pos = None
+        while nearest_curly_brace_pos != -1:
+            pair_end = self._find_label_pair_end(query, start)
+            nearest_curly_brace_pos = query.find("}", pair_end)
+            nearest_eq_sign_pos = query.find("=", pair_end)
+            if (nearest_curly_brace_pos < nearest_eq_sign_pos or
+                    nearest_eq_sign_pos == -1):
+                # If we have "}" before the nearest "=",
+                # then we must be at the end of the label section
+                # and the "=" is a part of the next section.
+                return nearest_curly_brace_pos
+            start = pair_end
+        return -1
+
     def enrich_query(self, query, disable_rbac=False):
         """Used to add rbac labels to queries
 
@@ -47,9 +82,7 @@ class Rbac():
         :param disable_rbac: Disables rbac injection if set to True
         :type disable_rbac: boolean
         """
-        # TODO: label values can be any unicode character
-        #       including '{}'. Current implementation
-        #       doesn't support that.
+        # TODO(jwysogla): This should be properly tested
         if disable_rbac:
             return query
         labels = self.default_labels
@@ -76,10 +109,11 @@ class Rbac():
             if (name_end_location < len(query) and
                query[name_end_location] == "{"):
                 # There already are some labels
-                label_section_end = query.find("}", name_end_location)
-                query = (f"{query[:label_section_end]}, "
+                labels_end = self._find_labels_end(query,
+                                                   name_end_location)
+                query = (f"{query[:labels_end]}, "
                          f"{format_labels(labels)}"
-                         f"{query[label_section_end:]}")
+                         f"{query[labels_end:]}")
             else:
                 query = (f"{query[:name_end_location]}"
                          f"{{{format_labels(labels)}}}"
