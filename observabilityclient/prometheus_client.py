@@ -12,7 +12,11 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
+import logging
 import requests
+
+
+LOG = logging.getLogger(__name__)
 
 
 class PrometheusAPIClientError(Exception):
@@ -97,11 +101,7 @@ class PrometheusAPIClient:
         :param query: the query to send
         :type query: str
         """
-        # TODO: Remove the prints. (I'll leave them here for some time, because
-        #       they are sometimes pretty useful while playing around with
-        #       RBAC for example)
-        print("query: ")
-        print(query)
+        LOG.debug(f"Querying prometheus with query: {query}")
         decoded = self._get("query", dict(query=query))
 
         if decoded['data']['resultType'] == 'vector':
@@ -117,6 +117,7 @@ class PrometheusAPIClient:
         :param matches: List of matches to send as parameters
         :type matches: [str]
         """
+        LOG.debug(f"Querying prometheus for series with matches: {matches}")
         decoded = self._get("series", {"match[]": matches})
 
         return decoded['data']
@@ -128,6 +129,7 @@ class PrometheusAPIClient:
         which labels to return. It's not possible to enforce
         rbac with this for example.
         """
+        LOG.debug(f"Querying prometheus for labels")
         decoded = self._get("labels")
 
         return decoded['data']
@@ -138,6 +140,7 @@ class PrometheusAPIClient:
         :param label: Name of label for which to return values
         :type label: str
         """
+        LOG.debug(f"Querying prometheus for the values of label: {label}")
         decoded = self._get(f"label/{label}/values")
 
         return decoded['data']
@@ -164,6 +167,7 @@ class PrometheusAPIClient:
         #      It does however return 500 code and error msg
         #      if the admin APIs are disabled.
 
+        LOG.debug(f"Deleting metrics from prometheus matching: {matches}")
         try:
             self._post("admin/tsdb/delete_series", {"match[]": matches,
                                                     "start": start,
@@ -176,6 +180,7 @@ class PrometheusAPIClient:
 
     def clean_tombstones(self):
         """Asks prometheus to clean tombstones"""
+        LOG.debug(f"Cleaning tombstones from prometheus")
         try:
             self._post("admin/tsdb/clean_tombstones")
         except PrometheusAPIClientError as exc:
@@ -188,5 +193,6 @@ class PrometheusAPIClient:
         """Creates snapshot of all current data and returns the file name,
            which contains the data.
         """
+        LOG.debug(f"Taking prometheus data snapshot")
         ret = self._post("admin/tsdb/snapshot")
         return ret["data"]["name"]

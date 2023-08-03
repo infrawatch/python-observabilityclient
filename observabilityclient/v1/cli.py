@@ -51,27 +51,13 @@ class Query(base.ObservabilityBaseCommand, lister.Lister):
     def get_parser(self, prog_name):
         parser = super().get_parser(prog_name)
         parser.add_argument(
-                '--label',
-                action="append",
-                help=_("Label to add to each metric inside the query. "
-                       "Use --label multiple times to add multiple labels."))
-        parser.add_argument(
                 'query',
                 help=_("Custom PromQL query"))
         return parser
 
     def take_action(self, parsed_args):
         client = metric_utils.get_client(self)
-        labels = {}
-        if parsed_args.label is not None:
-            for label_string in parsed_args.label:
-                label, value = label_string.split("=")
-                if label is None or value is None:
-                    error_msg = (f"Invalid label: {label_string}. Labels "
-                                 "should be specified as \"name='value'\"")
-                    raise ValueError(error_msg)
-                labels[label] = value
-        metric = client.query.query(parsed_args.query, labels,
+        metric = client.query.query(parsed_args.query,
                                     disable_rbac=parsed_args.disable_rbac)
         ret = metric_utils.metrics2cols(metric)
         return ret

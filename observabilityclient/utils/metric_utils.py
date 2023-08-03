@@ -15,22 +15,43 @@
 import os
 # TODO should we use this lib?
 import yaml
+import logging
 from observabilityclient.prometheus_client import PrometheusAPIClient
+
+DEFAULT_CONFIG_LOCATIONS = [os.environ["HOME"] + "/.config/openstack/",
+                            "/etc/openstack/"]
+CONFIG_FILE_NAME = "prometheus.yaml"
+LOG = logging.getLogger(__name__)
 
 
 class ConfigurationError(Exception):
     pass
 
 
+def get_config_file():
+    if os.path.exists(CONFIG_FILE_NAME):
+        LOG.debug(f"Using {CONFIG_FILE_NAME} as prometheus configuration")
+        return open(CONFIG_FILE_NAME, "r")
+    for path in DEFAULT_CONFIG_LOCATIONS:
+        full_filename = path + CONFIG_FILE_NAME
+        if os.path.exists(full_filename):
+            LOG.debug(f"Using {full_filename} as prometheus configuration")
+            return open(full_filename, "r")
+    return None
+
+
 def get_prometheus_client():
     host = None
     port = None
-    # TODO should the path stay hardcoded?
-    if os.path.exists("/etc/openstack/prometheus.yaml"):
-        with open("/etc/openstack/prometheus.yaml", "r") as conf_file:
-            conf = yaml.safe_load(conf_file)
+    conf_file = get_config_file()
+    if conf_file is not None:
+        conf = yaml.safe_load(conf_file)
+        if 'host' in conf:
             host = conf['host']
+        if 'port' in conf:
             port = conf['port']
+        conf_file.close()
+
     # NOTE(jwysogla): We allow to overide the prometheus.yaml by
     #                 the environment variables
     if 'PROMETHEUS_HOST' in os.environ:

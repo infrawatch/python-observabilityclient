@@ -35,7 +35,6 @@ class QueryManager(base.Manager):
             return sorted(unique_metric_names)
 
     # TODO: What's the difference between show and query
-    # TODO: Should this allow labels being specified like query below?
     def show(self, name, disable_rbac=False):
         """Shows current values for metrics of a specified name
 
@@ -44,29 +43,28 @@ class QueryManager(base.Manager):
         """
         enriched = self.client.rbac.append_rbac(name,
                                                 disable_rbac=disable_rbac)
-        return self.prom.query(enriched)
+        last_metric_query = f"last_over_time({enriched}[5m])"
+        return self.prom.query(last_metric_query)
 
-    def query(self, query, labels=None, disable_rbac=False):
-        """Sends a query to prometheus. Allows to specify additional labels.
+    def query(self, query, disable_rbac=False):
+        """Sends a query to prometheus
 
-        The query can be any PromQL query. The additional labels will be added
-        to all metric names inside the query as well as labels for enforcing
-        rbac. Having labels as part of a query is allowed.
+        The query can be any PromQL query. Labels for enforcing
+        rbac will be added to all of the metric name inside the query.
+        Having labels as part of a query is allowed.
 
         A call like this:
-        query("sum(name1) - sum(name2{label1='value'})", {label2:'value2'})
+        query("sum(name1) - sum(name2{label1='value'})")
         will result in a query string like this:
-        "sum(name1{label2='value2', rbac='rbac_value'}) -
-            sum(name2{label1='value', label2='value2', rbac='rbac_value'})"
+        "sum(name1{rbac='rbac_value'}) -
+            sum(name2{label1='value', rbac='rbac_value'})"
 
         :param query: Custom query string
         :type query: str
-        :param labels: Dictionary of labels to add to the query
-        :type labels: dict
         :param disable_rbac: Disables rbac injection if set to True
         :type disable_rbac: boolean
         """
-        query = self.client.rbac.enrich_query(query, labels, disable_rbac)
+        query = self.client.rbac.enrich_query(query, disable_rbac)
         return self.prom.query(query)
 
     def delete(self, matches, start=None, end=None):

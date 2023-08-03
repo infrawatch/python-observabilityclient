@@ -39,36 +39,23 @@ class Rbac():
                     }
             self.rbac_init_successful = False
 
-    def _enrich_labels(self, labels, disable_rbac):
-        if not self.rbac_init_successful and not disable_rbac:
-            raise ObservabilityRbacError("Unauthorized. Couldn't "
-                                         "get project id")
-        if not disable_rbac and not self.disable_rbac:
-            # Include labels to enforce rbac
-            if labels is not None:
-                labels = {**labels, **self.default_labels}
-            else:
-                labels = self.default_labels
-        return labels
-
-    # TODO aren't the additional labels just making
-    #      the code confusing? Are they useful?
-    def enrich_query(self, query, additional_labels=None, disable_rbac=False):
-        """Used to add rbac labels and additional specified labels to queries
+    def enrich_query(self, query, disable_rbac=False):
+        """Used to add rbac labels to queries
 
         :param query: The query to enrich
         :type query: str
-        :param additional_labels: Labels to add to the
-                                  query in addition to rbac
-        :type additional_labels: dict
         :param disable_rbac: Disables rbac injection if set to True
         :type disable_rbac: boolean
         """
-        labels = self._enrich_labels(additional_labels, disable_rbac)
-        if labels is None or labels == {}:
+        # TODO: label values can be any unicode character
+        #       including '{}'. Current implementation
+        #       doesn't support that.
+        if disable_rbac:
             return query
+        labels = self.default_labels
 
-        metric_names = self.client.query.list(disable_rbac=disable_rbac)
+        # We need to get all metric names, no matter the rbac
+        metric_names = self.client.query.list(disable_rbac=False)
 
         # We need to detect the locations of metric names
         # inside the query
@@ -99,8 +86,8 @@ class Rbac():
                          f"{query[name_end_location:]}")
         return query
 
-    def append_rbac(self, query, additional_labels=None, disable_rbac=False):
-        """Used to append rbac labels and additional labels to queries
+    def append_rbac(self, query, disable_rbac=False):
+        """Used to append rbac labels to queries
 
         It's a simplified and faster version of enrich_query(). This just
         appends the labels at the end of the query string. For proper handling
@@ -109,13 +96,10 @@ class Rbac():
 
         :param query: The query to append to
         :type query: str
-        :param additional_labels: Labels to add to the query
-                                  in addition to rbac
-        :type additional_labels: dict
         :param disable_rbac: Disables rbac injection if set to True
         :type disable_rbac: boolean
         """
-        labels = self._enrich_labels(additional_labels, disable_rbac)
-        if labels is None or labels == {}:
+        labels = self.default_labels
+        if disable_rbac:
             return query
         return f"{query}{{{format_labels(labels)}}}"
