@@ -12,8 +12,8 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-from observabilityclient.v1 import base
 from observabilityclient.utils import metric_utils
+from observabilityclient.v1 import base
 from osc_lib.i18n import _
 
 from cliff import lister

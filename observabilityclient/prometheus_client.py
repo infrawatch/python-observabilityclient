@@ -95,12 +95,12 @@ class PrometheusAPIClient:
         return decoded
 
     def query(self, query):
-        """Sends custom queries to Prometheus and
-           returns results as [PrometheusMetric]
+        """Sends custom queries to Prometheus
 
         :param query: the query to send
         :type query: str
         """
+
         LOG.debug(f"Querying prometheus with query: {query}")
         decoded = self._get("query", dict(query=query))
 
@@ -111,12 +111,12 @@ class PrometheusAPIClient:
         return result
 
     def series(self, matches):
-        """Queries the /series/ endpoint of prometheus,
-           returns the data it receives
+        """Queries the /series/ endpoint of prometheus
 
         :param matches: List of matches to send as parameters
         :type matches: [str]
         """
+
         LOG.debug(f"Querying prometheus for series with matches: {matches}")
         decoded = self._get("series", {"match[]": matches})
 
@@ -129,7 +129,8 @@ class PrometheusAPIClient:
         which labels to return. It's not possible to enforce
         rbac with this for example.
         """
-        LOG.debug(f"Querying prometheus for labels")
+
+        LOG.debug("Querying prometheus for labels")
         decoded = self._get("labels")
 
         return decoded['data']
@@ -140,6 +141,7 @@ class PrometheusAPIClient:
         :param label: Name of label for which to return values
         :type label: str
         """
+
         LOG.debug(f"Querying prometheus for the values of label: {label}")
         decoded = self._get(f"label/{label}/values")
 
@@ -180,7 +182,8 @@ class PrometheusAPIClient:
 
     def clean_tombstones(self):
         """Asks prometheus to clean tombstones"""
-        LOG.debug(f"Cleaning tombstones from prometheus")
+
+        LOG.debug("Cleaning tombstones from prometheus")
         try:
             self._post("admin/tsdb/clean_tombstones")
         except PrometheusAPIClientError as exc:
@@ -190,9 +193,8 @@ class PrometheusAPIClient:
                 raise exc
 
     def snapshot(self):
-        """Creates snapshot of all current data and returns the file name,
-           which contains the data.
-        """
-        LOG.debug(f"Taking prometheus data snapshot")
+        """Creates a snapshot and returns the file name containing the data"""
+
+        LOG.debug("Taking prometheus data snapshot")
         ret = self._post("admin/tsdb/snapshot")
         return ret["data"]["name"]

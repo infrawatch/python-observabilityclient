@@ -33,7 +33,7 @@ class ObservabilityBaseCommand(command.Command):
             help=_("Disable cleanup of temporary files.")
         )
 
-        # TODO Should this be restricted somehow?
+        # TODO(jwysogla): Should this be restricted somehow?
         parser.add_argument(
             '--disable-rbac',
             action='store_true',

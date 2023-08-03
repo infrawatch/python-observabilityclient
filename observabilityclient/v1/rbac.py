@@ -12,8 +12,8 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-from observabilityclient.utils.metric_utils import format_labels
 from keystoneauth1.exceptions.auth_plugins import MissingAuthPlugin
+from observabilityclient.utils.metric_utils import format_labels
 import re
 
 
@@ -109,8 +109,8 @@ class Rbac():
             if (name_end_location < len(query) and
                query[name_end_location] == "{"):
                 # There already are some labels
-                labels_end = self._find_labels_end(query,
-                                                   name_end_location)
+                labels_end = self._find_label_section_end(query,
+                                                          name_end_location)
                 query = (f"{query[:labels_end]}, "
                          f"{format_labels(labels)}"
                          f"{query[labels_end:]}")

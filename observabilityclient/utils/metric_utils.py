@@ -12,10 +12,10 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-import os
-# TODO should we use this lib?
-import yaml
 import logging
+import os
+import yaml
+
 from observabilityclient.prometheus_client import PrometheusAPIClient
 
 DEFAULT_CONFIG_LOCATIONS = [os.environ["HOME"] + "/.config/openstack/",

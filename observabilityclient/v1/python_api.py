@@ -12,8 +12,8 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-from observabilityclient.v1 import base
 from observabilityclient.utils.metric_utils import format_labels
+from observabilityclient.v1 import base
 
 
 class QueryManager(base.Manager):
@@ -34,7 +34,6 @@ class QueryManager(base.Manager):
             unique_metric_names = list(set([m['__name__'] for m in metrics]))
             return sorted(unique_metric_names)
 
-    # TODO: What's the difference between show and query
     def show(self, name, disable_rbac=False):
         """Shows current values for metrics of a specified name
 
@@ -81,10 +80,11 @@ class QueryManager(base.Manager):
         :param end: timestamp until which to delete
         :type end: rfc3339 or unix_timestamp
         """
-        # TODO Do we want to restrict access to the admin api endpoints?
-        #      We could either try to inject the project label like in
-        #      query. We could also do some check right here, before
-        #      it gets to prometheus.
+        # TODO(jwysogla) Do we want to restrict access to the admin api
+        #                endpoints? We could either try to inject
+        #                the project label like in query. We could also
+        #                do some check right here, before
+        #                it gets to prometheus.
         return self.prom.delete(matches, start, end)
 
     def clean_tombstones(self):

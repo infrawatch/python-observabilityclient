@@ -14,8 +14,9 @@
 
 import keystoneauth1.session
 
-from observabilityclient.v1 import python_api, rbac
 from observabilityclient.utils.metric_utils import get_prometheus_client
+from observabilityclient.v1 import python_api
+from observabilityclient.v1 import rbac
 
 
 class Client(object):
